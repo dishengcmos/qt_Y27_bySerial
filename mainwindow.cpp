@@ -110,7 +110,6 @@ void MainWindow::on_SliderRed_valueChanged(int value)
     for(uint8_t i=0;i<=7;i++)
     {
         rednum[10]=rednum[10]+ rednum[2+i];
-
     }
     port->write( rednum);
     qDebug()<<rednum;
