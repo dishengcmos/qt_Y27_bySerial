@@ -31,5 +31,16 @@ private slots:
     void on_SliderRed_actionTriggered(int action);
     void on_m_sendButton_clicked();
     void on_m_sendButton_clicked(bool checked);
+    void on_checkBox_stateChanged(int arg1);
+    void on_checkBox_clicked();
+    void on_checkBox_clicked(bool checked);
+    void on_checkBox_1_clicked(bool checked);
+    void on_checkBox_2_clicked(bool checked);
+    void on_checkBox_3_clicked(bool checked);
+    void on_checkBox_4_clicked(bool checked);
+    void on_checkBox_5_clicked(bool checked);
+    void on_checkBox_6_clicked(bool checked);
+    void on_checkBox_7_clicked(bool checked);
+    void on_checkBox_8_clicked(bool checked);
 };
 #endif // MAINWINDOW_H

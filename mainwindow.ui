@@ -272,9 +272,12 @@
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
-      <widget class="QCheckBox" name="checkBox">
+      <widget class="QCheckBox" name="checkBox_1">
        <property name="text">
         <string>LED1</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -283,12 +286,18 @@
        <property name="text">
         <string>LED2</string>
        </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
       </widget>
      </item>
      <item>
       <widget class="QCheckBox" name="checkBox_3">
        <property name="text">
         <string>LED3</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -297,12 +306,18 @@
        <property name="text">
         <string>LED4</string>
        </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
       </widget>
      </item>
      <item>
       <widget class="QCheckBox" name="checkBox_5">
        <property name="text">
         <string>LED5</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -311,6 +326,9 @@
        <property name="text">
         <string>LED6</string>
        </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
       </widget>
      </item>
      <item>
@@ -318,12 +336,18 @@
        <property name="text">
         <string>LED7</string>
        </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
       </widget>
      </item>
      <item>
       <widget class="QCheckBox" name="checkBox_8">
        <property name="text">
         <string>LED8</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
        </property>
       </widget>
      </item>

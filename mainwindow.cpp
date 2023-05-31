@@ -1,7 +1,9 @@
-#include "mainwindow.h"
+﻿#include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QSerialPortInfo>
 #include <QDebug>
+
+uint8_t G_mark1=0xff;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -106,7 +108,7 @@ void MainWindow::on_SliderRed_valueChanged(int value)
     rednum[5]= ui->SliderRed->value();
     rednum[6]= ui->SliderGreen->value();
     rednum[7]= ui->SliderBlue->value();
-
+    rednum[8]= G_mark1;
     for(uint8_t i=0;i<=7;i++)
     {
         rednum[10]=rednum[10]+ rednum[2+i];
@@ -116,4 +118,67 @@ void MainWindow::on_SliderRed_valueChanged(int value)
     ui->m_outputEdit->append(rednum.toHex());
 }
 
+/**************************LED灯选择控制*********************************************/
+void MainWindow::on_checkBox_1_clicked(bool checked)
+{
+    if(checked==true)
+        G_mark1|=0x01;
+    else
+        G_mark1&=0xfe;
+}
 
+void MainWindow::on_checkBox_2_clicked(bool checked)
+{
+    if(checked==true)
+        G_mark1|=0x02;
+    else
+        G_mark1&=0xfd;
+}
+
+void MainWindow::on_checkBox_3_clicked(bool checked)
+{
+    if(checked==true)
+        G_mark1|=0x04;
+    else
+        G_mark1&=0xfb;
+}
+
+void MainWindow::on_checkBox_4_clicked(bool checked)
+{
+    if(checked==true)
+        G_mark1|=0x08;
+    else
+        G_mark1&=0xf7;
+}
+
+void MainWindow::on_checkBox_5_clicked(bool checked)
+{
+    if(checked==true)
+        G_mark1|=0x10;
+    else
+        G_mark1&=0xef;
+}
+
+void MainWindow::on_checkBox_6_clicked(bool checked)
+{
+    if(checked==true)
+        G_mark1|=0x20;
+    else
+        G_mark1&=0xdf;
+}
+
+void MainWindow::on_checkBox_7_clicked(bool checked)
+{
+    if(checked==true)
+        G_mark1|=0x40;
+    else
+        G_mark1&=0xbf;
+}
+
+void MainWindow::on_checkBox_8_clicked(bool checked)
+{
+    if(checked==true)
+        G_mark1|=0x80;
+    else
+        G_mark1&=0x7f;
+}
