@@ -57,16 +57,38 @@ MainWindow::~MainWindow()
 void MainWindow::handle()
 {
     QByteArray readnum=port->readAll().toHex();
-    //ui->m_textEdit->append(port->readAll().toHex());
-    ui->m_textEdit->append(readnum);
 
+    /*****
+    readnum.resize(20);
+    uint8_t u8receivedata[5];
+    for(uint8_t i=0;i<5;i++)
+    {
+        u8receivedata[i]= readnum[i];
+    }
+    ******/
+//  ui->m_textEdit->append(port->readAll().toHex());
+   ui->m_textEdit->append(readnum);
     bool ok;
-    int val=readnum.toInt(&ok,16);//以十六进制数读入
+    int val=readnum.toInt(&ok,16);            //以十六进制数读入
+    QByteArray str=QByteArray::number(val,10);//显示为10进制字符串
+//    ui->m_textEdit->append(str);
 
-    QByteArray str=QByteArray::number(val,10);// 显示为10进制字符串
-   // qDebug()<<val;
-    ui->progBarV->setValue(val);
-    ui->SliderV->setValue(val);
+    qDebug()<<str;
+    qDebug()<<str[0];
+    qDebug()<<str[1];
+    qDebug()<<str[2];
+    qDebug()<<str[3];
+
+    /****
+    qDebug()<<u8receivedata[4];
+    qDebug()<<u8receivedata[5];
+    qDebug()<<u8receivedata[6];
+    qDebug()<<u8receivedata[7];
+    qDebug()<<u8receivedata[8];
+    qDebug()<<u8receivedata[9];
+    ****/
+//  ui->progBarV->setValue(val);
+//  ui->SliderV->setValue(val);
 }
 
 void MainWindow::send()
