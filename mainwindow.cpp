@@ -2,7 +2,7 @@
 #include "ui_mainwindow.h"
 #include <QSerialPortInfo>
 #include <QDebug>
-
+#include "tcp/tcpserver.h"
 uint8_t G_mark1=0xff;
 
 MainWindow::MainWindow(QWidget *parent)
@@ -10,7 +10,8 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-
+    TcpServer *m = new TcpServer();
+    m->openServer("192.168.0.25",7878);
     QObject::connect(ui->SliderGreen,SIGNAL(valueChanged(int)),  //关联 SliderGreen 的valueChanged()
                      this,SLOT(on_SliderRed_valueChanged(int)));
 
@@ -56,39 +57,61 @@ MainWindow::~MainWindow()
 
 void MainWindow::handle()
 {
-    QByteArray readnum=port->readAll().toHex();
 
-    /*****
-    readnum.resize(20);
-    uint8_t u8receivedata[5];
-    for(uint8_t i=0;i<5;i++)
+    static uint8_t recieveData[8];
+    static uint8_t step=0x01;
+    QByteArray readnum=port->readAll();
+    qDebug()<<"size:"<<readnum.length();
+
+    for(uint8_t i=0;i<readnum.length();i++)
     {
-        u8receivedata[i]= readnum[i];
+        qDebug()<<(int)(readnum[i]);
+        recieveData[i]=(int)(readnum[i]);
     }
-    ******/
-//  ui->m_textEdit->append(port->readAll().toHex());
-   ui->m_textEdit->append(readnum);
-    bool ok;
-    int val=readnum.toInt(&ok,16);            //以十六进制数读入
-    QByteArray str=QByteArray::number(val,10);//显示为10进制字符串
-//    ui->m_textEdit->append(str);
 
-    qDebug()<<str;
-    qDebug()<<str[0];
-    qDebug()<<str[1];
-    qDebug()<<str[2];
-    qDebug()<<str[3];
+    ui->m_textEdit->append(readnum);
 
-    /****
-    qDebug()<<u8receivedata[4];
-    qDebug()<<u8receivedata[5];
-    qDebug()<<u8receivedata[6];
-    qDebug()<<u8receivedata[7];
-    qDebug()<<u8receivedata[8];
-    qDebug()<<u8receivedata[9];
-    ****/
-//  ui->progBarV->setValue(val);
-//  ui->SliderV->setValue(val);
+    switch(step)
+    {
+    case 0x01:
+        if((recieveData[0]==0xfc)&&(recieveData[1]==0xfc))
+            step=0x02;
+        else
+            step=0x01;
+
+        break;
+    case 0x02:
+        if(recieveData[2]==0x01)
+            step=0x03;
+        else
+            step=0x01;
+        break;
+
+    case 0x03:
+    {
+        uint16_t datah,datal;
+        uint16_t data=0x00;
+        datah=recieveData[4];
+        datal=recieveData[5];
+        data=(datah<<8)|datal;
+
+        ui->progBarV->setValue(data);
+        ui->SliderV->setValue(data);
+        break;
+    }
+    default:
+
+        break;
+    }
+
+
+
+    //bool ok;
+    //int val=readnum.toInt(&ok,16);            //以十六进制数读入
+    //QByteArray str=QByteArray::number(val,10);//显示为10进制字符串
+    //ui->m_textEdit->append(str);
+    //ui->progBarV->setValue(val);
+    //ui->SliderV->setValue(val);
 }
 
 void MainWindow::send()
