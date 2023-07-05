@@ -2,29 +2,67 @@
 #include "ui_mainwindow.h"
 #include <QSerialPortInfo>
 #include <QDebug>
-#include "tcp/tcpserver.h"
+#include <QtNetwork>
+
 uint8_t G_mark1=0xff;
+
+
+QString MainWindow::getLocalIP()
+{//获取本机IPv4地址
+    QString hostName=QHostInfo::localHostName();//本地主机名
+    QHostInfo   hostInfo=QHostInfo::fromName(hostName);
+    QString   localIP="";
+
+    QList<QHostAddress> addList=hostInfo.addresses();//
+
+    if (!addList.isEmpty())
+    for (int i=0;i<addList.count();i++)
+    {
+        QHostAddress aHost=addList.at(i);
+        if (QAbstractSocket::IPv4Protocol==aHost.protocol())
+        {
+            localIP=aHost.toString();
+            break;
+        }
+    }
+    return localIP;
+}
+
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    TcpServer *m = new TcpServer();
-    m->openServer("192.168.0.25",7878);
     QObject::connect(ui->SliderGreen,SIGNAL(valueChanged(int)),  //关联 SliderGreen 的valueChanged()
                      this,SLOT(on_SliderRed_valueChanged(int)));
 
     QObject::connect(ui->SliderBlue,SIGNAL(valueChanged(int)), //关联 SliderBlue的valueChanged()
                      this,SLOT(on_SliderRed_valueChanged(int)));
 
+
+    LabListen=new QLabel("监听状态:");
+    LabListen->setMinimumWidth(150);
+
+
+    LabSocketState=new QLabel("Socket状态：");//
+    LabSocketState->setMinimumWidth(200);
+
+    QString localIP=getLocalIP();//本机IP
+    this->setWindowTitle(this->windowTitle()+"----本机IP："+localIP);
+    ui->comboIP->addItem(localIP);
+    tcpServer=new QTcpServer(this);
+    connect(tcpServer,SIGNAL(newConnection()),this,SLOT(onNewConnection()));
+
+
     QList<QSerialPortInfo> list;
     connect(ui->m_sendButton,SIGNAL(clicked()),this,SLOT(send()));
     list = QSerialPortInfo::availablePorts();
     for (int i = 0; i < list.size(); i++)
     {
-        qDebug() << list.at(i).portName() ;//串口名字
-        qDebug() << list.at(i).description();//串口描述
+        qDebug() << list.at(i).portName() ;     //串口名字
+        qDebug() << list.at(i).description();   //串口描述
         qDebug() << "#########";
 
         port = new QSerialPort(list.at(i).portName());//通过名字打开，可通过上面的list里查找
@@ -48,6 +86,8 @@ MainWindow::MainWindow(QWidget *parent)
         }
         break;
     }
+
+
 }
 
 MainWindow::~MainWindow()
@@ -104,8 +144,6 @@ void MainWindow::handle()
         break;
     }
 
-
-
     //bool ok;
     //int val=readnum.toInt(&ok,16);            //以十六进制数读入
     //QByteArray str=QByteArray::number(val,10);//显示为10进制字符串
@@ -116,7 +154,7 @@ void MainWindow::handle()
 
 void MainWindow::send()
 {
-//  port->write("1234");
+    //port->write("1234");
     QString rednum;
     rednum=ui->SliderRed->value();
     //qDebug()<<ui->m_inputEdit->toPlainText();
@@ -124,7 +162,136 @@ void MainWindow::send()
     //port->write(ui->m_inputEdit->toPlainText().toUtf8());
 }
 
+/**********************************wifi*************************************/
 
+void MainWindow::onNewConnection()
+{
+//  ui->plainTextEdit->appendPlainText("有新连接");
+    tcpSocket = tcpServer->nextPendingConnection(); //创建socket
+
+    connect(tcpSocket, SIGNAL(connected()),
+            this, SLOT(onClientConnected()));
+    onClientConnected();//
+
+    connect(tcpSocket, SIGNAL(disconnected()),
+            this, SLOT(onClientDisconnected()));
+
+    connect(tcpSocket,SIGNAL(stateChanged(QAbstractSocket::SocketState)),
+            this,SLOT(onSocketStateChange(QAbstractSocket::SocketState)));
+    onSocketStateChange(tcpSocket->state());
+
+    connect(tcpSocket,SIGNAL(readyRead()),
+            this,SLOT(onSocketReadyRead()));
+}
+
+void MainWindow::onSocketStateChange(QAbstractSocket::SocketState socketState)
+{//socket状态变化时
+    switch(socketState)
+    {
+    case QAbstractSocket::UnconnectedState:
+        LabSocketState->setText("scoket状态：UnconnectedState");
+        break;
+    case QAbstractSocket::HostLookupState:
+        LabSocketState->setText("scoket状态：HostLookupState");
+        break;
+    case QAbstractSocket::ConnectingState:
+        LabSocketState->setText("scoket状态：ConnectingState");
+        break;
+
+    case QAbstractSocket::ConnectedState:
+        LabSocketState->setText("scoket状态：ConnectedState");
+        break;
+
+    case QAbstractSocket::BoundState:
+        LabSocketState->setText("scoket状态：BoundState");
+        break;
+
+    case QAbstractSocket::ClosingState:
+        LabSocketState->setText("scoket状态：ClosingState");
+        break;
+
+    case QAbstractSocket::ListeningState:
+        LabSocketState->setText("scoket状态：ListeningState");
+    }
+}
+
+void MainWindow::onClientConnected()
+{
+    // 客户端接入时
+    ui->plainTextEdit->appendPlainText("**client socket connected");
+    ui->plainTextEdit->appendPlainText("**peer address:"+
+                                   tcpSocket->peerAddress().toString());
+    ui->plainTextEdit->appendPlainText("**peer port:"+
+                                   QString::number(tcpSocket->peerPort()));
+}
+
+void MainWindow::onSocketReadyRead()
+{//读取缓冲区行文本
+//    QStringList   lines;
+    while(tcpSocket->canReadLine())
+        ui->plainTextEdit->appendPlainText("[in] "+tcpSocket->readLine());
+//        lines.append(clientConnection->readLine());
+}
+
+void MainWindow::on_turnonwifi_clicked()
+{
+    //开始监听
+    QString     IP=ui->comboIP->currentText();//IP地址
+    quint16     port=ui->spinPort->value();//端口
+    QHostAddress    addr(IP);
+    tcpServer->listen(addr,port);//
+    //  tcpServer->listen(QHostAddress::LocalHost,port);// Equivalent to QHostAddress("127.0.0.1").
+    ui->plainTextEdit->appendPlainText("**开始监听...");
+    ui->plainTextEdit->appendPlainText("**服务器地址："
+                       +tcpServer->serverAddress().toString());
+    ui->plainTextEdit->appendPlainText("**服务器端口："
+                       +QString::number(tcpServer->serverPort()));
+
+
+    LabListen->setText("监听状态：正在监听");
+}
+
+
+void MainWindow::on_sendwifi_clicked()
+{
+    //发送一行字符串，以换行符结束
+    QString  msg=ui->lineEdit->text();
+    ui->plainTextEdit->appendPlainText("[out] "+msg);
+    ui->lineEdit->clear();
+    ui->lineEdit->setFocus();
+
+    QByteArray  str=msg.toUtf8();
+    str.append('\n');//添加一个换行符
+    tcpSocket->write(str);
+}
+
+/******
+void MainWindow::onClientDisconnected()
+{//客户端断开连接时
+    ui->plainTextEdit->appendPlainText("**client socket disconnected");
+    tcpSocket->deleteLater();
+    //    deleteLater();//QObject::deleteLater();
+}
+******/
+/*********
+void MainWindow::on_actStop_triggered()
+{//停止监听
+    if (tcpServer->isListening()) //tcpServer正在监听
+    {
+        tcpServer->close();//停止监听
+        ui->actStart->setEnabled(true);
+        ui->actStop->setEnabled(false);
+        LabListen->setText("监听状态：已停止监听");
+    }
+}
+
+void MainWindow::on_actClear_triggered()
+{
+    ui->plainTextEdit->clear();
+}
+*********/
+
+/**************************************************************/
 void MainWindow::on_SliderRed_valueChanged(int value)
 {
     //拖动Red、Green、Blue 颜色滑动条
@@ -227,3 +394,4 @@ void MainWindow::on_checkBox_8_clicked(bool checked)
     else
         G_mark1&=0x7f;
 }
+
